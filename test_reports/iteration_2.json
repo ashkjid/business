@@ -1,0 +1,50 @@
+{
+  "summary": "Iteration 2 — Emergent Google Auth integration tested end-to-end. 35/35 backend pytest tests pass (15 new emergent-auth + 20 legacy regression). All frontend critical flows verified using Mongo-seeded user_sessions cookie injection: master skips onboarding & sees Admin Console, non-master without business_type is redirected to /onboarding by ProtectedRoute, onboarding submit persists business_type and routes to /dashboard, non-master blocked from /admin, AuthCallback synchronously detects #session_id= in App.js and POSTs to /api/auth/session (verified by exchange returning user_data_not_found for an invalid session_id and falling back to /login with toast). Logout clears cookie + deletes user_sessions row. Bearer/JWT/cookie auth all interoperate via the shared get_current_user dependency.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "CORS", "issue": "backend/.env CORS_ORIGINS=\"*\" combined with allow_credentials=True is invalid per browser spec. It works today only because frontend and backend share the same preview origin (proxy). If a different preview alias hits the API with credentials the browser will block it with 'Access-Control-Allow-Origin: * cannot be used with credentials'. Recommend setting CORS_ORIGINS to the explicit preview/prod origin(s)."},
+      {"endpoint": "/api/auth/session", "issue": "Cookie is set with SameSite=None; Secure; HttpOnly which is correct. No expires_at validation on Emergent response — backend trusts the returned session_token blindly and assumes 7-day expiry. Acceptable, but consider using the expires_at returned by Emergent if present."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "AuthProvider /auth/me on initial load", "issue": "Console warning 'Cannot update a component while rendering a different component' fires during the initial render — likely AuthProvider or ProtectedRoute calling setState during render. Non-blocking but pollutes console. Inspect /app/frontend/src/lib/auth.jsx and /app/frontend/src/components/ProtectedRoute.jsx for setState-in-render.", "affected_selectors": ["AuthProvider", "ProtectedRoute"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_emergent_auth.py",
+    "/app/backend/tests/test_leadmap.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/pytest/pytest_emergent_auth.xml"
+  ],
+  "action_items": [
+    "(Minor) Replace CORS_ORIGINS=\"*\" in /app/backend/.env with the explicit preview origin (e.g. https://2b79e8ff-524a-4c1c-8da9-ec599a9e75ef.preview.emergentagent.com) to make the cookie-with-credentials flow safe across preview aliases.",
+    "(Minor) Investigate React warning 'Cannot update a component while rendering a different component' in AuthProvider/ProtectedRoute (setState-in-render).",
+    "(Operational) After changing /app/frontend/.env, the dev server must be restarted (sudo supervisorctl restart frontend) — this iteration the bundle had stale REACT_APP_BACKEND_URL pointing to a different alias which produced CORS errors until restart. Already restarted during testing.",
+    "(Carry-over from iteration 1) Enable 'Maps JavaScript API' SKU on GCP key — this iteration maps loaded for the master test session, but iteration 1 saw ApiProjectMapError for some keys; verify production key is configured."
+  ],
+  "critical_code_review_comments": [
+    "Auth dependency get_current_user correctly accepts BOTH cookie session_token and Authorization Bearer (session_token OR JWT) — verified by tests TestCookieAuth + TestLegacyJWT.",
+    "/auth/session correctly rejects missing X-Session-ID with 400 and invalid session_id with 401 (502 if Emergent unreachable). Importantly, passing a session_token as X-Session-ID does NOT validate via Emergent (verified) — Emergent only knows session_id, not the token it returns.",
+    "/auth/logout deletes the Mongo user_sessions row AND clears the cookie. Verified via DB inspection.",
+    "Onboarding endpoint correctly enforces business_type for non-master and is a no-op for master. ProtectedRoute redirects non-master with empty business_type to /onboarding (verified in browser).",
+    "App.js synchronously detects window.location.hash 'session_id=' before AuthProvider initializes — this prevents the race condition where /auth/me would be called before the cookie is set. Verified by hitting /dashboard#session_id=fake — AuthCallback DID render and POST to /auth/session (we observed the 'Invalid session' toast).",
+    "AuthProvider correctly skips /auth/me when hash includes session_id= (lib/auth.jsx line 37).",
+    "Master is force-promoted to is_master=True/can_export=True at upsert_user — defensive and correct.",
+    "Login.jsx UI: 'Sign in with Google' is the primary CTA; demo login is collapsed under 'Or use demo login' toggle. Matches spec.",
+    "CORS_ORIGINS=\"*\" with allow_credentials=True is technically invalid per CORS spec; works only because most flows are same-origin. Tighten to explicit origin list."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_emergent_auth.py (NEW — 15 tests for Emergent auth)"
+  ],
+  "success_rate": {"backend": "100% (35/35 — 15 new + 20 regression)", "frontend": "100% on tested flows (login UI, master cookie auth, onboarding redirect, onboarding submit, admin gating, logout, AuthCallback session_id exchange)"},
+  "test_credentials": "Master demo: ashkjid@gmail.com / Master Admin (no password). Cookie test sessions seeded directly via mongosh — see /app/auth_testing.md Step 1.",
+  "seed_data_creation": "Created TEST_emerge_*@test.com users + user_sessions rows (auto-cleaned by pytest module fixture). Created TEST_browser_master@test.com and TEST_browser_nm@test.com for browser tests (not auto-cleaned — recommend periodic mongo cleanup).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend: pytest /app/backend/tests/test_emergent_auth.py /app/backend/tests/test_leadmap.py -v. To seed an Emergent-style session for browser testing, insert directly into Mongo (see /app/auth_testing.md Step 1) — Emergent OAuth cannot be automated. Frontend dev server bakes REACT_APP_BACKEND_URL at start time; if .env is edited, restart frontend supervisor before testing or you'll see CORS errors from a stale baseURL. AuthCallback redirects to /login on invalid session_id — to verify it rendered, watch network for POST /api/auth/session OR the toast '[Invalid session:]' on the login page, NOT the auth-callback-page selector (it disappears after redirect).",
+  "rca of the issue": "No new bugs introduced. Pre-existing minor: CORS_ORIGINS=* + allow_credentials=True is non-spec-compliant — only safe because frontend and backend share origin via /api proxy. Once different preview aliases or sub-domains are used, browsers will reject the credentialed request. Mitigation: set CORS_ORIGINS in backend/.env to the explicit preview/prod origin (the same value as REACT_APP_BACKEND_URL). One operational gotcha encountered: frontend bundle had stale REACT_APP_BACKEND_URL (pointing to a different preview alias) because the dev server was started before .env was updated. Resolved by `sudo supervisorctl restart frontend`."
+}

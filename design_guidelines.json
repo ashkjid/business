@@ -1,0 +1,105 @@
+{
+  "theme": "Light",
+  "archetype": "4 - Swiss & High-Contrast",
+  "design_philosophy": "Authoritative, functional, and data-dense enterprise SaaS. Utilizing stark contrasts, strict grids, and optical clarity. Replacing soft 'SaaS' styles with a brutalist-leaning structural UI that feels like an operational hub.",
+  "typography": {
+    "font_family": {
+      "headings": "Cabinet Grotesk",
+      "body": "IBM Plex Sans",
+      "mono": "IBM Plex Mono"
+    },
+    "hierarchy": {
+      "h1": "text-4xl font-bold tracking-tight",
+      "h2": "text-2xl font-semibold tracking-tight",
+      "h3": "text-lg font-medium tracking-tight",
+      "body": "text-sm leading-relaxed",
+      "labels": "text-xs font-semibold uppercase tracking-[0.2em]"
+    }
+  },
+  "colors": {
+    "background": "#FFFFFF",
+    "surface": "#F5F5F5",
+    "surface_glass": "rgba(255,255,255,0.85)",
+    "border": "#E5E5E5",
+    "primary_accent": "#FF4F00",
+    "primary_hover": "#CC3F00",
+    "text_main": "#111111",
+    "text_muted": "#666666",
+    "sidebar_bg": "#0A0A0A",
+    "sidebar_text": "#F5F5F5"
+  },
+  "spacing_and_layout": {
+    "philosophy": "F-Pattern scanning for data, modular widgets for actions.",
+    "dashboard_shell": "flex h-screen overflow-hidden",
+    "sidebar": "w-64 bg-sidebar_bg flex-shrink-0",
+    "main_content": "flex-1 overflow-y-auto bg-background p-8",
+    "table_density": "py-2 px-4 text-sm",
+    "radius": "rounded-none (sharp edges for technical Swiss look)"
+  },
+  "components_instructions": {
+    "table": "Shadcn Table. Flat, 1px borders, no outer shadow. Hover states: bg-surface. Include 'select all' checkbox in header. sticky header.",
+    "buttons": "Shadcn Button. Primary: bg-primary_accent text-white hover:bg-primary_hover. Secondary: border-border text-text_main hover:bg-surface.",
+    "inputs": "Shadcn Input/Select. Square corners, focus:ring-1 focus:ring-primary_accent.",
+    "sticky_toolbar": "Floating bar (z-50) fixed to bottom center of the screen when rows are selected. bg-[#111111] text-white shadow-2xl flex gap-4 p-4 items-center.",
+    "badges": "Shadcn Badge for rating and status. Square corners.",
+    "dialogs": "Shadcn Dialog for Email Composer. Sharp corners, backdrop-blur-sm.",
+    "tabs": "Shadcn Tabs for Profile/Admin. Underline style preferred over pill style.",
+    "toast": "Use Sonner for error/success notifications."
+  },
+  "page_wireframes": {
+    "login_page": {
+      "layout": "50/50 split screen (h-screen)",
+      "left_panel": "Flex center, bg-white. Contains brand logo, H1: 'LeadMap / Access', subtext, and Google Login button. Left align content.",
+      "right_panel": "Full height image using `login_bg_map`. No text overlay."
+    },
+    "dashboard_search": {
+      "layout": "Vertical stack with generous gap-8",
+      "top_section": "H1 'Lead Explorer' with a top-right User Profile dropdown.",
+      "map_picker": "h-[400px] w-full relative border border-border. Google Map instance. Overlay floating card on top-left for Category Dropdown (Shadcn Select) and 'Search Area' CTA.",
+      "results_section": "Displays 'Total Count' badge. Data Table with Sortable headers. Columns: Checkbox, Name, Address, Phone, Email, Rating, Review Count, Hours, Website. Pagination controls (50/page) at top and bottom.",
+      "empty_state": "Use `admin_empty_state` image centered with text 'Select a location on the map and choose a category to begin prospecting.'"
+    },
+    "profile_and_admin": {
+      "layout": "Tabs component for navigation between Profile and Master Admin.",
+      "profile_tab": "Form to set 'Gmail App Password' (Input type password). Status card showing API usage (X/2 sessions).",
+      "admin_tab": "Rendered ONLY for ashkjid@gmail.com. Sub-tabs or stacked sections for: 1. API Keys Management, 2. Data Source Toggle, 3. Per-User Export Permissions Table."
+    },
+    "email_composer_modal": {
+      "layout": "Shadcn Dialog. Fixed template text area. Read-only 'To' field showing selected count. 'Send via Gmail' CTA."
+    }
+  },
+  "media_and_images": {
+    "login_bg_map": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/fd6b1e56-0c46-4fea-ad2f-f0a391c92611/images/527ab87342cd5dec627545ffff1b7af25d152534c700f193f809424cdbcf69f8.png",
+      "description": "High-end abstract topographic map texture, minimal Swiss design style.",
+      "usage": "Right side of the split login page."
+    },
+    "admin_empty_state": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/fd6b1e56-0c46-4fea-ad2f-f0a391c92611/images/b0c2d7844fbfee6ccfea6c64e1e943bb4f0021adc72d1f19bbc425d944f26248.png",
+      "description": "Macro photography of organized data blocks, frosted glass.",
+      "usage": "Empty state illustration for tables or when no search is performed."
+    }
+  },
+  "testing_attributes": {
+    "rule": "All interactive elements MUST have data-testid attributes using kebab-case role-based naming.",
+    "examples": [
+      "data-testid='login-google-btn'",
+      "data-testid='map-canvas'",
+      "data-testid='category-select'",
+      "data-testid='search-submit-btn'",
+      "data-testid='table-row-checkbox'",
+      "data-testid='bulk-action-email-btn'",
+      "data-testid='bulk-action-wa-btn'",
+      "data-testid='bulk-action-export-excel-btn'"
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Install and use @phosphor-icons/react for dense dashboard icons.",
+    "Ensure all components use the sharp, rounded-none style for the Swiss brutalist aesthetic.",
+    "Strictly follow the color palette, using the vermilion accent (#FF4F00) sparingly for primary CTAs only.",
+    "Implement the sticky toolbar for bulk actions as a floating element that enters the screen when selected row count > 0.",
+    "Do NOT use Inter, Roboto, or Space Grotesk. Use Cabinet Grotesk for headings and IBM Plex Sans for body.",
+    "Table pagination must support 50 items per page with clear top and bottom controls.",
+    "Admin routes and features must be strictly conditional based on the master email (ashkjid@gmail.com)."
+  ]
+}

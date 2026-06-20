@@ -1,0 +1,61 @@
+// Drop-in replacement for the "Sign in with Google" button (Azure / vendor-neutral version)
+//
+// HOW TO APPLY:
+// 1. Install: yarn add @react-oauth/google
+// 2. Open /app/frontend/src/index.js, wrap <App /> with <GoogleOAuthProvider clientId={...}>
+// 3. Open /app/frontend/src/pages/Login.jsx
+// 4. REMOVE the current signInWithGoogle() function (the one that redirects to auth.emergentagent.com)
+// 5. REMOVE the <Button onClick={signInWithGoogle}> ... </Button>
+// 6. PASTE the <GoogleLogin> component from below in its place
+// 7. Add to /app/frontend/.env: REACT_APP_GOOGLE_OAUTH_CLIENT_ID=<your-client-id>
+// 8. Open /app/frontend/src/App.js — REMOVE the "if (location.hash?.includes('session_id=')) return <AuthCallback/>" block (no longer needed)
+// 9. Delete /app/frontend/src/pages/AuthCallback.jsx (no longer needed)
+// 10. Open /app/frontend/src/lib/auth.jsx — REMOVE the "if (window.location.hash?.includes('session_id=')) return" branch in useEffect
+
+// ─────────────────────────────────────────────────────────────
+// /app/frontend/src/index.js — wrap App
+// ─────────────────────────────────────────────────────────────
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
+root.render(
+  <React.StrictMode>
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_ID}>
+      <App />
+    </GoogleOAuthProvider>
+  </React.StrictMode>
+);
+
+// ─────────────────────────────────────────────────────────────
+// /app/frontend/src/pages/Login.jsx — replacement button + handler
+// ─────────────────────────────────────────────────────────────
+import { GoogleLogin } from "@react-oauth/google";
+import api from "../lib/api";
+
+// inside Login component:
+const handleGoogleCredential = async (credentialResponse) => {
+  try {
+    const r = await api.post("/auth/google", { credential: credentialResponse.credential });
+    const user = r.data.user;
+    setUser?.(user);
+    localStorage.setItem("leadmap_user", JSON.stringify(user));
+    if (r.data.needs_onboarding) {
+      nav("/onboarding", { replace: true });
+    } else {
+      toast.success(`Welcome, ${user.name}`);
+      nav("/dashboard", { replace: true });
+    }
+  } catch (err) {
+    toast.error(err?.response?.data?.detail || "Sign-in failed");
+  }
+};
+
+// In the JSX where the orange "Sign in with Google" button currently is, replace with:
+<GoogleLogin
+  onSuccess={handleGoogleCredential}
+  onError={() => toast.error("Google sign-in failed")}
+  size="large"
+  width="100%"
+  text="signin_with"
+  shape="rectangular"
+  theme="outline"
+/>

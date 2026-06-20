@@ -1,0 +1,95 @@
+@import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 7%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 7%;
+  --primary: 18 100% 50%; /* vermilion #FF4F00 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 7%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 7%;
+  --destructive: 0 84% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 18 100% 50%;
+  --radius: 0.125rem; /* sharp / Swiss */
+
+  --sidebar-bg: 0 0% 4%;
+  --sidebar-fg: 0 0% 96%;
+}
+
+* { border-color: hsl(var(--border)); }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: 'Cabinet Grotesk', 'IBM Plex Sans', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.font-mono, code, pre {
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.label-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+/* No rounded corners — Swiss look */
+.btn-sharp { border-radius: 2px; }
+
+/* Topographic noise bg for empty state */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #ccc; border-radius: 0; }
+
+/* Dialog override sharp */
+[data-radix-popper-content-wrapper] { border-radius: 2px !important; }
+
+/* Google Places Autocomplete dropdown — show above modals/cards */
+.pac-container {
+  z-index: 10000 !important;
+  border-radius: 0 !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+  font-family: 'IBM Plex Sans', sans-serif !important;
+}
+.pac-item {
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  border-top: 1px solid hsl(var(--border)) !important;
+}
+.pac-item:hover { background: hsl(var(--muted)) !important; }
+.pac-item-query { color: hsl(var(--foreground)) !important; font-weight: 500 !important; }

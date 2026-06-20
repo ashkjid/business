@@ -1,0 +1,41 @@
+{
+  "summary": "Full-stack testing of LeadMap. All 20 backend pytest tests passed (auth, places search w/ real Google Places API, email config validation, admin master-only endpoints, user permissions). Frontend critical flows verified: 3-step demo login (email/name -> OTP toast -> business-type) works for both master and non-master, non-master correctly blocked from /admin (redirected to /dashboard) and has no Admin link in sidebar, master sees MASTER badge + Admin Console link, dashboard map+category UI loads, admin tabs (API Keys/Data Source/User Permissions) render and toggling export permission works.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/email/send-bulk", "issue": "Recipient-limit (>2) check for non-master is unreachable in practice because gmail-not-configured 400 fires first. Order of checks should arguably validate recipient count before requiring gmail config, but functionally the limit IS enforced when a user has configured gmail."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Map picker (Google Maps JS)", "issue": "Console error 'Google Maps JavaScript API error: ApiProjectMapError' and a Google modal dialog 'This page can\\'t load Google Maps correctly' overlays the map on initial load. Tiles still render with 'For development purposes only' watermark. The same key works fine for backend Places API. Root cause: the Maps JavaScript API SKU is not enabled / not authorised for this referrer on the GCP project for AIzaSyDY2cCGbC8CUViIyrngTbKsJkWyArwWUN4, OR the key has HTTP-referrer restrictions that exclude the preview domain.", "affected_selectors": ["MapPicker"]}
+    ],
+    "design_issues": [
+      {"screen": "Login (right panel)", "issues": ["Topographic image is decorative-only and renders fine; no contrast issues observed"]},
+      {"screen": "Dashboard", "issues": ["Layout, sidebar, MASTER badge, sticky toolbar (when selecting) and pagination all render correctly"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_leadmap.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Enable 'Maps JavaScript API' SKU on the GCP project for key AIzaSyDY2cCGbC8CUViIyrngTbKsJkWyArwWUN4 (or remove HTTP-referrer restrictions for the preview domain) so the map picker stops showing the ApiProjectMapError dialog. This is a GCP/key configuration issue — no code change needed.",
+    "(Optional) In /api/email/send-bulk, consider validating recipient count BEFORE the gmail-config check so non-master users get a clearer 403 message even before configuring Gmail.",
+    "(Optional) server.py is ~525 lines and mixes auth, places, email, admin domains — could be split into routers as the app grows."
+  ],
+  "critical_code_review_comments": [
+    "server.py logically sound: pydantic validation, JWT auth dependency, master-only dependency, Mongo ObjectId excluded via projection {_id:0}, Fernet for storing app passwords, async httpx for crawl with semaphore, Google Places (New) v1 with field mask and pagination — all good.",
+    "Email recipient-limit check (>2 for non-master) is placed after the gmail-not-configured check; reorder so the 403 limit check fires first for clearer UX semantics.",
+    "Login endpoint mixes Google ID-token verification and demo path; current behaviour (demo when GOOGLE_OAUTH_CLIENT_ID is empty) is correct and matches the test_credentials doc.",
+    "Frontend uses process.env.REACT_APP_BACKEND_URL via /app/frontend/src/lib/api.js (assumed) and REACT_APP_GOOGLE_PLACES_API_KEY for Maps — env-driven, no hardcoded URLs.",
+    "All interactive elements have data-testid (login inputs, OTP, business-type select, category-select, search-submit-btn, bulk-email-btn, bulk-whatsapp-btn, bulk-export-excel-btn, bulk-export-pdf-btn, admin tabs, user-perm-toggle-{email}). Excellent test coverage hooks.",
+    "Master is forced can_export=True at user_to_out (defensive), preventing accidental lockout."
+  ],
+  "updated_files": ["/app/backend/tests/test_leadmap.py"],
+  "success_rate": {"backend": "100% (20/20)", "frontend": "~95% (all flows verified except actual map-click pin placement which is blocked by ApiProjectMapError dialog)"},
+  "test_credentials": "Master: ashkjid@gmail.com / Master Admin (no password — demo OTP shown in toast). Non-master: any other email + name + business_type required at first login.",
+  "seed_data_creation": "Created TEST_user_<timestamp>@test.com via fixture and several TEST_nobiz_*/TEST_withbiz_* via auth tests (cleanup not performed; recommend periodic cleanup of TEST_-prefixed users).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend tests in /app/backend/tests/test_leadmap.py — runnable with `pytest /app/backend/tests/test_leadmap.py -v`. Login OTP is in a Sonner toast — read text via document.querySelectorAll('[data-sonner-toast]'). To select a radix Select item inside dialog, use page.locator('[role=\"option\"]', has_text=...).first.click(force=True) AFTER opening the trigger and waiting 300-400ms. Map picker pin-drop testing is currently blocked by ApiProjectMapError modal — if map issue persists, use page.evaluate to dispatch a click on the .gm-style div, or have the developer enable Maps JavaScript API on the GCP project.",
+  "rca of the issue": "ApiProjectMapError is NOT a code bug. The Google Cloud project owning key AIzaSyDY2cCGbC8CUViIyrngTbKsJkWyArwWUN4 either (a) does not have 'Maps JavaScript API' enabled, (b) has billing disabled, or (c) has HTTP referrer restrictions excluding *.preview.emergentagent.com. Reproduction: open dashboard → modal 'This page can\\'t load Google Maps correctly' appears + console error 'ApiProjectMapError'. Mitigation: in GCP Console for the key's project, enable 'Maps JavaScript API' SKU and ensure 'Places API (New)' (already working) and JavaScript API are both enabled; whitelist the preview domain in referrer restrictions, or remove referrer restriction temporarily."
+}
